@@ -12,17 +12,24 @@ const { logger } = config;
 module.exports = {
 
   async create(request) {
-    const client = await Client.create(request.payload);
-    if (!client) {
+    if (!request.payload) {
+      throw Boom.badRequest('Payload was missing');
+    }
+
+    // If payload exists, attempt to create new Client.
+    const client = await Client.create(request.payload).then(data => {
+      logger.info(
+        `[ClientController->create] Created a new client with id: ${data.id}`,
+      );
+      return data;
+    }).catch(err => {
       logger.warn(
         '[ClientController->create] Could not create client due to bad request',
         request,
       );
-      throw Boom.badRequest();
-    }
-    logger.info(
-      '[ClientController->create] Created a new client',
-    );
+      throw Boom.badRequest(err.message);
+    });
+
     return client;
   },
 
