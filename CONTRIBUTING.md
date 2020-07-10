@@ -3,6 +3,7 @@
 The complete [HID Developer onboarding documentation
 ](https://docs.google.com/document/d/1h3MX_ay7EyFr62dyhvdSXAOP2g4ho3j7m3KNdG8ZFxE/edit) can be found in Google docs. This file covers one-time technical setup notes. You should only need these notes when onboarding, or setting up the repo on a new computer.
 
+## Development on OCHA Infra
 
 ### Testing different environments
 
@@ -19,6 +20,7 @@ https://api.dev.humanitarian.id/docs/#!/auth/post_jsonwebtoken
 
 Sometimes development requires authenticating with various roles or permissions. **Contact Marina** to get access to the document which contains credentials for accounts with various roles (and thus the ability to authenticate with a different token).
 
+## Local development
 
 ### Downloading DB Snapshots
 
@@ -48,6 +50,58 @@ mongorestore -d local -c user user.bson
 HID is reliant on email notifications for several critical aspects of its function. You may find yourself needing to send or check for the reception of emails while doing development and testing.
 
 Refer to the [OCHA Developer Handbook regarding use of Mailhog](https://docs.google.com/document/d/1j5QkW_yTA4efqIq40wuRqyvLecbVkOZwwOumZoN4qxI/edit#heading=h.5koxy8t2dww)
+
+
+### Logging
+
+We strive to log all transactions and errors since HID is a shared piece of infrastructure employed by dozens of websites. In most any file, there is a `logger` function available for you to use.
+
+```js
+// Logging successful operations (INFO)
+logger.info(
+  'Primary log message goes here.',
+  {
+    request,
+    security: true,
+    // anything else goes here
+  }
+);
+
+// Logging failed operations (WARN)
+logger.warn(
+  'Primary log message goes here.',
+  {
+    request,
+    security: true,
+    fail: true,
+    // anything else goes here
+  }
+);
+
+
+// Logging errors (ERROR)
+// Assuming we're in a catch block with a node.js error assigned to `err`
+catch(err => {
+  logger.error(
+    err.message,
+    {
+      request,
+      security: true,
+      fail: true,
+      stack_trace: err.stack,
+    }
+  );
+});
+```
+
+The general format of a log is described in the code block. Each component is explained here:
+
+- The first string is the primary message. It will appear in ELK as `json.message` — Please keep this string **generic** and **free of variables**. Although our codebase does not yet strictly follow this convention, it is something we would like to achieve long-term.
+- The `request` object should be included in its entirety, except when sensitive information is included. For example, we sanitize a request containing user password submissions by executing `delete request.payload.password` before logging the object.
+- OICT requirement: `security: true` should be included when the operation involves authentication of a user — logging in, logging out, changing primary emails, adding or removing emails, enable/disable 2FA, and so forth. If the operation isn't security related, omit the `security` property instead of setting to `false`.
+- OICT requirement: `fail: true` when the operation represents a failure to achieve the intended goal, such as logging in. A request that contains an invalid password for the user is both `security: true` and `fail: true`. Like `security`, just omit this property when the value isn't `true`
+- The remaining arguments you supply should appear alphabetically. They should use `snake_case`. Some common ones are `client_id`, `email`, `stack_trace`, `user_id`.
+- Finally, our linter will complain if your variable is the same name as the JSON property. That's why `request` is using shorthand instead of being written as `request: request`
 
 
 ## Swagger API Docs
