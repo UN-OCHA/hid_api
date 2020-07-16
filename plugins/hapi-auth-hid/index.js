@@ -28,30 +28,70 @@ internals.tokenToUser = async (token) => {
     // Make sure token is not blacklisted
     const tok = await JwtToken.findOne({ token, blacklist: true });
     if (tok) {
-      logger.warn('Tried to get authorization with a blacklisted token', { security: true, fail: true });
+      logger.warn(
+        'Tried to get authorization with a blacklisted token',
+        {
+          security: true,
+          fail: true,
+        },
+      );
       throw Boom.unauthorized('Invalid Token !');
     }
     const user = await User.findOne({ _id: jtoken.id });
     if (user) {
-      logger.info('Successful authentication through JWT', { security: true, user: jtoken.id });
+      logger.info(
+        'Successful authentication through JWT',
+        {
+          security: true,
+          user: {
+            id: jtoken.id,
+          },
+        },
+      );
       return {
         credentials: user,
       };
     }
 
-    logger.warn('Could not find user linked to JWT', { security: true, fail: true });
+    logger.warn(
+      'Could not find user linked to JWT',
+      {
+        security: true,
+        fail: true,
+      },
+    );
     throw Boom.unauthorized('Invalid Token !');
   } catch (err) {
     const tok = await OauthToken.findOne({ token }).populate('user client');
     if (!tok) {
-      logger.warn('Invalid token', { security: true, fail: true });
+      logger.warn(
+        'Invalid token',
+        {
+          security: true,
+          fail: true,
+        },
+      );
       throw Boom.unauthorized('Invalid Token!');
     }
     if (tok.isExpired()) {
-      logger.warn('Token is expired', { security: true, fail: true });
+      logger.warn(
+        'Token is expired',
+        {
+          security: true,
+          fail: true,
+        },
+      );
       throw Boom.unauthorized('Expired token');
     }
-    logger.info('Successful authentication through OAuth token', { security: true, user: tok.client.id });
+    logger.info(
+      'Successful authentication through OAuth token',
+      {
+        security: true,
+        user: {
+          id: tok.client.id,
+        },
+      },
+    );
     return {
       credentials: tok.user,
       artifacts: tok.client,
@@ -75,9 +115,9 @@ internals.implementation = () => ({
     // Check for our special cases that are allowed to execute without an Auth
     // token being sent.
     if (
-        allowPathsWithoutAuthentication.includes(request.path)
-        && request.method === 'post'
-        && !request.headers.authorization
+      allowPathsWithoutAuthentication.includes(request.path)
+      && request.method === 'post'
+      && !request.headers.authorization
     ) {
       return reply.continue;
     }
@@ -94,7 +134,14 @@ internals.implementation = () => ({
           token = credentials;
         }
       } else {
-        logger.warn('Wrong format for authorization header', { security: true, fail: true, request });
+        logger.warn(
+          'Wrong format for authorization header',
+          {
+            request,
+            security: true,
+            fail: true,
+          },
+        );
         throw Boom.unauthorized('Format is Authorization: Bearer [token]');
       }
     } else if (request.query.bewit) {
@@ -118,7 +165,16 @@ internals.implementation = () => ({
         throw Boom.unauthorized('No user found');
       }
       delete request.query.bewit;
-      logger.info('Successful authentication through bewit', { security: true, user: attributes.id, request });
+      logger.info(
+        'Successful authentication through bewit',
+        {
+          request,
+          security: true,
+          user: {
+            id: attributes.id,
+          },
+        },
+      );
       return reply.authenticated({
         credentials: user,
       });
@@ -131,7 +187,14 @@ internals.implementation = () => ({
       const creds = await internals.tokenToUser(token);
       return reply.authenticated(creds);
     }
-    logger.warn('No authorization token was found', { security: true, fail: true, request });
+    logger.warn(
+      'No authorization token was found',
+      {
+        request,
+        security: true,
+        fail: true,
+      },
+    );
     throw Boom.unauthorized('No Authorization header was found');
   },
 
@@ -148,7 +211,14 @@ internals.implementation = () => ({
       request.auth.credentials = creds.credentials;
       return h.continue;
     }
-    logger.warn('No authorization token was found', { security: true, fail: true, request });
+    logger.warn(
+      'No authorization token was found',
+      {
+        request,
+        security: true,
+        fail: true,
+      },
+    );
     throw Boom.unauthorized('No authorization token found');
   },
 
