@@ -27,30 +27,29 @@ module.exports = {
     level: 'debug',
     exitOnError: false,
     rewriters: [
-      (level, msg, ametadata) => {
-        let metadata = ametadata;
+      (level, msg, logObject) => {
+        const localLogObject = _.clone(logObject || {});
+        const metadata = {};
+
         let ip = '';
-        if (metadata.request && metadata.request.info && metadata.request.info.remoteAddress) {
-          ip = metadata.request.info.remoteAddress;
+        if (logObject.request && logObject.request.info && logObject.request.info.remoteAddress) {
+          ip = logObject.request.info.remoteAddress;
         }
-        if (metadata.request && metadata.request.headers && metadata.request.headers['x-forwarded-for']) {
-          ip = metadata.request.headers['x-forwarded-for'];
+        if (logObject.request && logObject.request.headers && logObject.request.headers['x-forwarded-for']) {
+          ip = logObject.request.headers['x-forwarded-for'];
         }
-        let userId = '';
-        if (metadata.request && metadata.request.params && metadata.request.params.currentUser) {
-          userId = metadata.request.params.currentUser._id.toString();
-        }
-        delete metadata.request;
 
-        // Keep original metadata safe.
-        metadata = _.clone(metadata || {});
+        // Try to automatically detect user.
+        // This will get overwritten if payload.user exists.
+        if (logObject.request && logObject.request.params && logObject.request.params.currentUser) {
+          metadata.user.id = logObject.request.params.currentUser._id.toString();
+        }
 
-        // Extend metadata with some default.
+        // Extend metadata with some defaults.
         metadata.level = level;
         metadata.hostname = os.hostname();
         metadata.env = `hid-${process.env.NODE_ENV}`;
         metadata.ip = ip;
-        metadata.user = userId;
         metadata['@timestamp'] = new Date().toJSON();
 
         return metadata;
