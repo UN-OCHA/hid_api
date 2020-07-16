@@ -58,6 +58,10 @@ module.exports = {
     ],
     transports: [
       new winston.transports.Console(),
+      new winston.transports.File({
+        filename: '/var/log/local.log',
+        timestamp: true,
+      }),
     ],
   }),
 
