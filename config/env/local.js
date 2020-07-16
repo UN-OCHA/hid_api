@@ -39,12 +39,6 @@ module.exports = {
           ip = logObject.request.headers['x-forwarded-for'];
         }
 
-        // Try to automatically detect user.
-        // This will get overwritten if payload.user exists.
-        if (logObject.request && logObject.request.params && logObject.request.params.currentUser) {
-          metadata.user.id = logObject.request.params.currentUser._id.toString();
-        }
-
         // Extend metadata with some defaults.
         metadata.level = level;
         metadata.hostname = os.hostname();
@@ -54,23 +48,6 @@ module.exports = {
 
         // Include custom user object from log
         metadata.user = localLogObject.user || {};
-
-        // Avoid logging sensitive data
-        if (
-          localLogObject.request
-          && localLogObject.request.payload
-          && localLogObject.request.payload.password
-        ) {
-          delete localLogObject.request.payload.password;
-        }
-
-        if (
-          localLogObject.request
-          && localLogObject.request.payload
-          && localLogObject.request.payload.confirm_password
-        ) {
-          delete localLogObject.request.payload.confirm_password;
-        }
 
         // Check if we received a request object
         if (localLogObject.request) {
@@ -85,13 +62,39 @@ module.exports = {
             payload: localLogObject.request.payload || {},
           };
 
-          // Sanitize things we know contain sensitive data
+          // Try to automatically detect user unless logObject.user.id already exists.
+          if (logObject.request.params && logObject.request.params.currentUser) {
+            if (!logObject.user.id) {
+              metadata.user.id = logObject.request.params.currentUser._id.toString();
+            }
+          }
+
+          // Sanitize passwords
+          if (localLogObject.request.payload && localLogObject.request.payload.password) {
+            delete localLogObject.request.payload.password;
+          }
+          if (localLogObject.request.payload && localLogObject.request.payload.confirm_password) {
+            delete localLogObject.request.payload.confirm_password;
+          }
+
+          // Sanitize OAuth client secrets
           if (metadata.request.query && typeof metadata.request.query.client_secret !== 'undefined') {
             // display first/last three characters but scrub the rest
             const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
             metadata.request.query.client_secret = sanitizedSecret;
           }
-        } // end of preprocessing localLogObject.request
+
+          // Sanitize JWTs, which can allow anyone to masquerade as this user.
+          if (metadata.request.headers && metadata.request.headers.Authorization) {
+            delete metadata.request.headers.Authorization;
+          }
+
+          // Sanitize credentials, which seems to contain the entire user object
+          // from HID, including numerous pieces of sensitive data.
+          if (metadata.request.auth && metadata.request.auth.credentials) {
+            delete metadata.request.auth.credentials;
+          }
+        }
 
         return metadata;
       },

@@ -499,6 +499,16 @@ module.exports = {
         user.translateListNames(reqLanguage);
         return user;
       }
+
+      // Finally: if we didn't find a user, send a 404.
+      logger.warn(
+        `[UserController->find] Could not find user ${request.params.id}`,
+        {
+          request,
+          fail: true,
+        },
+      );
+      throw Boom.notFound();
     }
     const options = HelperService.getOptionsFromQuery(request.query);
     const criteria = HelperService.getCriteriaFromQuery(request.query);
