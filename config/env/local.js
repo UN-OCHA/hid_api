@@ -85,8 +85,15 @@ module.exports = {
           }
 
           // Sanitize JWTs, which can allow anyone to masquerade as this user.
-          if (metadata.request.headers && metadata.request.headers.Authorization) {
-            delete metadata.request.headers.Authorization;
+          // We do this by removing the signature at the end, which only our
+          // server can generate. That way, we can decode and inspect the payload
+          // for debugging purposes, without risking the use of the JWT by devs
+          // who have access to ELK.
+          if (metadata.request.headers && metadata.request.headers.authorization) {
+            let sanitizedJWT = metadata.request.headers.authorization.split('.');
+            sanitizedJWT.pop();
+            sanitizedJWT = sanitizedJWT.join('.');
+            metadata.request.headers.authorization = sanitizedJWT;
           }
 
           // Sanitize credentials, which seems to contain the entire user object
