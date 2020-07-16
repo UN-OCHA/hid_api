@@ -52,6 +52,47 @@ module.exports = {
         metadata.ip = ip;
         metadata['@timestamp'] = new Date().toJSON();
 
+        // Include custom user object from log
+        metadata.user = localLogObject.user || {};
+
+        // Avoid logging sensitive data
+        if (
+          localLogObject.request
+          && localLogObject.request.payload
+          && localLogObject.request.payload.password
+        ) {
+          delete localLogObject.request.payload.password;
+        }
+
+        if (
+          localLogObject.request
+          && localLogObject.request.payload
+          && localLogObject.request.payload.confirm_password
+        ) {
+          delete localLogObject.request.payload.confirm_password;
+        }
+
+        // Check if we received a request object
+        if (localLogObject.request) {
+          // Include relevant chunks of the node.js request object. If we include
+          // whole object wholesale, the recursion creates gigantic, useless logs.
+          metadata.request = {
+            path: localLogObject.request.path || {},
+            headers: localLogObject.request.headers || {},
+            query: localLogObject.request.query || {},
+            url: localLogObject.request.url || {},
+            auth: localLogObject.request.auth || {},
+            payload: localLogObject.request.payload || {},
+          };
+
+          // Sanitize things we know contain sensitive data
+          if (metadata.request.query && typeof metadata.request.query.client_secret !== 'undefined') {
+            // display first/last three characters but scrub the rest
+            const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
+            metadata.request.query.client_secret = sanitizedSecret;
+          }
+        } // end of preprocessing localLogObject.request
+
         return metadata;
       },
     ],

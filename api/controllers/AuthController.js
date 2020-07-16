@@ -28,7 +28,16 @@ async function loginHelper(request) {
   if (!email || !password) {
     const cuser = request.auth.credentials;
     if (!cuser) {
-      logger.warn('[AuthController->loginHelper] Could not log in because of an invalid JSON Web Token');
+      logger.warn(
+        '[AuthController->loginHelper] Could not log in because of an invalid JSON Web Token',
+        {
+          request,
+          security: true,
+          user: {
+            email,
+          },
+        },
+      );
       throw Boom.unauthorized('Invalid JSON Web Token');
     }
     cuser.sanitize(cuser);
@@ -53,7 +62,9 @@ async function loginHelper(request) {
         request,
         security: true,
         fail: true,
-        email,
+        user: {
+          email,
+        },
       },
     );
     throw Boom.tooManyRequests('Your account has been locked for 5 minutes because of too many requests.');
@@ -65,7 +76,6 @@ async function loginHelper(request) {
         request,
         security: true,
         fail: true,
-        email,
       },
     );
     throw Boom.unauthorized('invalid email or password');
@@ -77,7 +87,10 @@ async function loginHelper(request) {
         request,
         security: true,
         fail: true,
-        email,
+        user: {
+          id: user._id,
+          email,
+        },
       },
     );
     throw Boom.unauthorized('Please verify your email address');
@@ -89,7 +102,10 @@ async function loginHelper(request) {
         request,
         security: true,
         fail: true,
-        email,
+        user: {
+          id: user._id,
+          email,
+        },
       },
     );
     throw Boom.unauthorized('password is expired');
@@ -102,7 +118,9 @@ async function loginHelper(request) {
         request,
         security: true,
         fail: true,
-        email,
+        user: {
+          email,
+        },
       },
     );
     // Create a flood entry
