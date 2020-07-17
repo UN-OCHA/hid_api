@@ -1,5 +1,3 @@
-
-
 exports.development = require('./development');
 exports.staging = require('./staging');
 exports.local = require('./local');
