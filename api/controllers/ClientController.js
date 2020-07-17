@@ -37,19 +37,24 @@ module.exports = {
    */
   async create(request) {
     const payload = request.payload || {};
-    const client = await Client.create(payload);
-    if (!client) {
+    const client = await Client.create(payload).catch((err) => {
       logger.warn(
         '[ClientController->create] Could not create client due to bad request',
-        request,
+        {
+          request,
+          stack_trace: err.message,
+        },
       );
-      throw Boom.badRequest();
+    });
+
+    if (client) {
+      logger.info(
+        '[ClientController->create] Created a new client',
+      );
+      return client;
     }
 
-    logger.info(
-      '[ClientController->create] Created a new client',
-    );
-    return client;
+    throw Boom.badRequest();
   },
 
   /*
