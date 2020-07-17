@@ -386,7 +386,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
-            client_id: request.query.client_id,
+            oauth: {
+              client_id: request.query.client_id,
+            },
           },
         );
 
@@ -409,7 +411,10 @@ module.exports = {
           '[AuthController->authorizeDialogOauth2] Get request to /oauth/authorize without session. Redirecting to the login page.',
           {
             request,
-            client_id: request.query.client_id,
+            security: true,
+            oauth: {
+              client_id: request.query.client_id,
+            },
           },
         );
         return reply.redirect(
@@ -438,7 +443,12 @@ module.exports = {
                 request,
                 security: true,
                 fail: true,
-                user_id: cookie.userId,
+                user: {
+                  id: cookie.userId,
+                },
+                oauth: {
+                  client_id: false,
+                },
               },
             );
             return done(
@@ -453,8 +463,13 @@ module.exports = {
                 request,
                 security: true,
                 fail: true,
-                client_id: client.id,
-                user_id: cookie.userId,
+                oauth: {
+                  client_id: client.id,
+                  redirect_uri: redirect,
+                },
+                user: {
+                  id: cookie.userId,
+                },
               },
             );
             return done('Wrong redirect URI');
@@ -467,7 +482,9 @@ module.exports = {
               request,
               security: true,
               fail: true,
-              user_id: cookie.userId,
+              user: {
+                id: cookie.userId,
+              },
               stack_trace: err.stack,
             },
           );
@@ -517,7 +534,9 @@ module.exports = {
           '[AuthController->authorizeOauth2] Got request to /oauth/authorize without session. Redirecting to the login page.',
           {
             request,
-            client_id: request.query.client_id,
+            oauth: {
+              client_id: request.query.client_id,
+            },
           },
         );
         return reply.redirect(`/?redirect=/oauth/authorize&client_id=${request.query.client_id
@@ -536,16 +555,18 @@ module.exports = {
             request,
             security: true,
             fail: true,
+            oauth: {
+              client_id: request.query.client_id,
+            },
           },
         );
         throw Boom.badRequest('Could not find user');
       }
       user.sanitize(user);
       request.auth.credentials = user;
+
       // Save authorized client if user allowed
-      //
-      // Note, using var here allows us to log the clientId in case of errors.
-      var clientId = request.yar.authorize[request.payload.transaction_id].client;
+      const clientId = request.yar.authorize[request.payload.transaction_id].client;
       if (!request.payload.bsubmit || request.payload.bsubmit === 'Deny') {
         return reply.redirect('/');
       }
@@ -556,9 +577,14 @@ module.exports = {
           '[AuthController->authorizeOauth2] Added authorizedClient to user',
           {
             request,
-            client_id: clientId,
-            email: user.email,
-            user_id: user._id,
+            security: true,
+            user: {
+              id: user._id,
+              email: user.email,
+            },
+            oauth: {
+              client_id: clientId,
+            },
           },
         );
         await user.save();
@@ -572,7 +598,6 @@ module.exports = {
           request,
           security: true,
           fail: true,
-          client_id: clientId,
           stack_trace: err.stack,
         },
       );
@@ -621,7 +646,6 @@ module.exports = {
             request,
             security: true,
             fail: true,
-            client_id: clientId,
           },
         );
         throw Boom.badRequest('invalid client authentication');
@@ -646,6 +670,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
+            oauth: {
+              client_id: client.id,
+            },
           },
         );
         throw Boom.badRequest('invalid client_secret');
@@ -660,7 +687,9 @@ module.exports = {
             request,
             security: true,
             fail: true,
-            code,
+            oauth: {
+              code,
+            },
           },
         );
         // OAuth2 standard error.
@@ -803,7 +832,7 @@ module.exports = {
     if (jtoken.id === request.auth.credentials.id) {
       // Blacklist token
       logger.info(
-        `[AuthController->blacklistJwt] Blacklisting token`,
+        '[AuthController->blacklistJwt] Blacklisting token',
         {
           request,
           security: true,
@@ -832,7 +861,7 @@ module.exports = {
    * Creates short lived (5 minutes) tokens to
    * sign requests for file downloads.
    */
-  signRequest(request, reply) {
+  signRequest(request) {
     const url = request.payload ? request.payload.url : null;
     if (!url) {
       logger.warn(

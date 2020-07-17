@@ -20,6 +20,9 @@ module.exports = {
     // Include custom user object from log
     metadata.user = localLogObject.user || {};
 
+    // Include custom oauth object from log
+    metadata.oauth = localLogObject.oauth || {};
+
     // Check if we received a request object
     if (localLogObject.request) {
       // Include relevant chunks of the node.js request object. If we include
