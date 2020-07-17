@@ -83,6 +83,15 @@ module.exports = {
         }
       }
 
+      // Sanitize JWT blacklist requests. For the same reason as Authentication
+      // headers in generic requests.
+      if (metadata.request.payload && typeof metadata.request.payload.token !== 'undefined') {
+        let sanitizedJWT = metadata.request.payload.token.split('.');
+        sanitizedJWT.pop();
+        sanitizedJWT = sanitizedJWT.join('.');
+        metadata.request.payload.token = sanitizedJWT;
+      }
+
       // Sanitize credentials, which seems to contain the entire user object
       // from HID, including numerous pieces of sensitive data.
       if (metadata.request.auth && metadata.request.auth.credentials) {
