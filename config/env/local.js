@@ -41,10 +41,7 @@ module.exports = {
 
         // Extend metadata with some defaults.
         metadata.level = level;
-        metadata.hostname = os.hostname();
-        metadata.env = `hid-${process.env.NODE_ENV}`;
         metadata.ip = ip;
-        metadata['@timestamp'] = new Date().toJSON();
 
         // Include custom user object from log
         metadata.user = localLogObject.user || {};
