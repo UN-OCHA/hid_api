@@ -26,11 +26,10 @@ module.exports = {
       // whole object wholesale, the recursion creates gigantic, useless logs.
       metadata.request = {
         path: localLogObject.request.path || {},
-        headers: localLogObject.request.headers || {},
         query: localLogObject.request.query || {},
-        url: localLogObject.request.url || {},
-        auth: localLogObject.request.auth || {},
         payload: localLogObject.request.payload || {},
+        headers: localLogObject.request.headers || {},
+        auth: localLogObject.request.auth || {},
       };
 
       // Try to automatically detect user unless logObject.user.id already exists.
