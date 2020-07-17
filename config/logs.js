@@ -35,7 +35,7 @@ module.exports = {
 
       // Try to automatically detect user unless logObject.user.id already exists.
       if (logObject.request.params && logObject.request.params.currentUser) {
-        if (!logObject.user.id) {
+        if (typeof metadata.user.id === 'undefined') {
           metadata.user.id = logObject.request.params.currentUser._id.toString();
         }
       }
@@ -68,8 +68,11 @@ module.exports = {
         sanitizedJWT = sanitizedJWT.join('.');
         metadata.request.headers.authorization = sanitizedJWT;
 
-        // Auto-populate requesting user ID from JWT
-        metadata.user.id = JSON.parse(asciiJWT).id;
+        // Auto-populate requesting user ID from JWT unless user.id was explicitly
+        // passed into the log.
+        if (typeof metadata.user.id === 'undefined') {
+          metadata.user.id = JSON.parse(asciiJWT).id;
+        }
       }
 
       // Sanitize credentials, which seems to contain the entire user object
@@ -81,4 +84,4 @@ module.exports = {
 
     return metadata;
   },
-}
+};
