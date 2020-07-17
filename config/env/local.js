@@ -88,9 +88,14 @@ module.exports = {
           // who have access to ELK.
           if (metadata.request.headers && metadata.request.headers.authorization) {
             let sanitizedJWT = metadata.request.headers.authorization.split('.');
+            const buffer = Buffer.from(sanitizedJWT[1], 'base64');
+            const asciiJWT = buffer.toString('ascii');
             sanitizedJWT.pop();
             sanitizedJWT = sanitizedJWT.join('.');
             metadata.request.headers.authorization = sanitizedJWT;
+
+            // Auto-populate requesting user ID from JWT
+            metadata.user.id = JSON.parse(asciiJWT).id;
           }
 
           // Sanitize credentials, which seems to contain the entire user object
