@@ -24,8 +24,8 @@ module.exports = {
     // Include custom oauth object from log
     metadata.oauth = localLogObject.oauth || {};
 
-    // If this is an error and a stack trace was sent, append to log.
-    if (level === 'error' && typeof localLogObject.stack_trace !== 'undefined') {
+    // If this is an error/warning and a stack trace was sent, append to log.
+    if (['error', 'warn'].includes(level) && typeof localLogObject.stack_trace !== 'undefined') {
       metadata.stack_trace = localLogObject.stack_trace;
     }
 
