@@ -99,7 +99,11 @@ async function _pdfExport(users, number, lists, req, format) {
   }
   logger.error(
     '[UserController->_pdfExport] An error occurred while generating a PDF',
-    { response: clientRes },
+    {
+      request: req,
+      fail: true,
+      response: clientRes,
+    },
   );
   throw new Error(`An error occurred while generating PDF for list ${data.lists[0].name}`);
 }
@@ -284,16 +288,13 @@ module.exports = {
    */
   async create(request) {
     if (!request.payload.app_verify_url) {
-      if (request.payload && request.payload.password) {
-        delete request.payload.password;
-      }
-      if (request.payload && request.payload.confirm_password) {
-        delete request.payload.confirm_password;
-      }
-
       logger.warn(
         '[UserController->create] Missing app_verify_url',
-        { request, security: true, fail: true }
+        {
+          request,
+          security: true,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Missing app_verify_url');
     }
@@ -309,7 +310,11 @@ module.exports = {
 
       logger.warn(
         `[UserController->create] app_verify_url ${appVerifyUrl} is not in authorizedDomains allowlist`,
-        { request, security: true, fail: true },
+        {
+          request,
+          security: true,
+          fail: true,
+        },
       );
       throw Boom.badRequest('Invalid app_verify_url');
     }
@@ -333,23 +338,23 @@ module.exports = {
       const requestIsV3 = request.path.indexOf('api/v3') !== -1;
       if (request.payload.password && request.payload.confirm_password) {
         if (requestIsV3 && !User.isStrongPasswordV3(request.payload.password)) {
-          // Remove sensitive fields before logging payload
-          delete request.payload.password;
-          delete request.payload.confirm_password;
-
           logger.warn(
             '[UserController->create] Provided password is not strong enough (v3)',
-            { request: request.payload, fail: true },
+            {
+              request,
+              security: true,
+              fail: true,
+            },
           );
           throw Boom.badRequest('The password is not strong enough');
         } else if (!User.isStrongPassword(request.payload.password)) {
-          // Remove sensitive fields before logging payload
-          delete request.payload.password;
-          delete request.payload.confirm_password;
-
           logger.warn(
             '[UserController->create] Provided password is not strong enough (v2)',
-            { request: request.payload, fail: true },
+            {
+              request,
+              security: true,
+              fail: true,
+            },
           );
           throw Boom.badRequest('The password is not strong enough');
         }
@@ -398,18 +403,27 @@ module.exports = {
 
       const user = await User.create(request.payload);
       if (!user) {
-        // Delete sensitive fields before logging
-        delete request.payload.password;
-        delete request.payload.confirm_password;
-
         logger.warn(
           '[UserController->create] Create user failed',
-          { request: request.payload, fail: true },
+          {
+            request,
+            security: true,
+            fail: true,
+          },
         );
         throw Boom.badRequest();
       }
       logger.info(
-        `[UserController->create] User ${user._id.toString()} created successfully`,
+        `[UserController->create] User created successfully with ID ${user._id.toString()}`,
+        {
+          request,
+          security: true,
+          user: {
+            id: user._id.toString(),
+            email: user.email,
+            admin: user.is_admin,
+          },
+        },
       );
 
       if (user.email && notify === true) {
@@ -417,17 +431,26 @@ module.exports = {
           await EmailService.sendRegister(user, appVerifyUrl);
           logger.info(
             `[UserController->create] Sent registration email to ${user.email}`,
+            {
+              request,
+            },
           );
         } else if (registrationType === 'kiosk') {
           // An admin is creating an orphan user or Kiosk registration
           await EmailService.sendRegisterKiosk(user, appVerifyUrl);
           logger.info(
             `[UserController->create] Sent registration kiosk email to ${user.email}`,
+            {
+              request,
+            },
           );
         } else {
           await EmailService.sendRegisterOrphan(user, request.auth.credentials, appVerifyUrl);
           logger.info(
             `[UserController->create] Sent registration orphan email to ${user.email}`,
+            {
+              request,
+            },
           );
         }
       }
@@ -436,11 +459,25 @@ module.exports = {
     if (!request.auth.credentials) {
       logger.warn(
         `[UserController->create] The email address ${request.payload.email} is already registered`,
+        {
+          request,
+          fail: true,
+          user: {
+            email: request.payload.email,
+          },
+        },
       );
       throw Boom.badRequest('This email address is already registered. If you can not remember your password, please reset it');
     } else {
       logger.warn(
-        `[UserController->create] The user already exists. id: ${record._id.toString()}`,
+        `[UserController->create] The user already exists with ID ${record._id.toString()}`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: record._id.toString(),
+          },
+        }
       );
       throw Boom.badRequest(`This user already exists. user_id=${record._id.toString()}`);
     }
@@ -523,6 +560,13 @@ module.exports = {
     if (request.params.extension && request.auth.credentials.hidden) {
       logger.warn(
         `[UserController->find] Hidden user ${request.auth.credentials.id} tried to export users`,
+        {
+          request,
+          fail: true,
+          user: {
+            id: request.auth.credentials.id,
+          },
+        },
       );
       throw Boom.unauthorized();
     }
@@ -540,7 +584,10 @@ module.exports = {
       if (criteria.name.length < 3) {
         logger.warn(
           '[UserController->find] Name of a user must have at least 3 characters in find method',
-          { name: criteria.name },
+          {
+            request,
+            fail: true,
+          },
         );
         throw Boom.badRequest('Name must have at least 3 characters');
       }
@@ -576,6 +623,10 @@ module.exports = {
         } else {
           logger.warn(
             `[UserController->find] User ${request.auth.credentials.id} is not authorized to view list ${list._id.toString()}`,
+            {
+              request,
+              fail: true,
+            },
           );
           throw Boom.unauthorized('You are not authorized to view this list');
         }
@@ -603,7 +654,10 @@ module.exports = {
     if (!results) {
       logger.warn(
         '[UserController->find] Could not find users',
-        { criteria },
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
@@ -691,6 +745,10 @@ module.exports = {
     if (!user) {
       logger.warn(
         `[UserController->update] Could not find user ${request.params.id}`,
+        {
+          request,
+          fail: true,
+        },
       );
       throw Boom.notFound();
     }
@@ -719,7 +777,10 @@ module.exports = {
           },
         });
         logger.info(
-          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updated list counts`,
+          `[UserController->update] User ${user._id.toString()} is becoming invisible. Updated list counts.`,
+          {
+            request,
+          },
         );
       }
     }
@@ -736,6 +797,9 @@ module.exports = {
         });
         logger.info(
           `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+          {
+            request,
+          },
         );
       }
     }
@@ -753,6 +817,9 @@ module.exports = {
         });
         logger.info(
           `[UserController->update] User ${user._id.toString()} is being flagged. Updated list counts`,
+          {
+            request,
+          },
         );
       }
     }
@@ -770,22 +837,31 @@ module.exports = {
         });
         logger.info(
           `[UserController->update] User ${user._id.toString()} is being unflagged. Updated list counts`,
+          {
+            request,
+          },
         );
       }
     }
 
-    user = await User
-      .findOneAndUpdate(
-        { _id: request.params.id },
-        request.payload,
-        { runValidators: true, new: true },
-      );
+    user = await User.findOneAndUpdate(
+      { _id: request.params.id },
+      request.payload,
+      { runValidators: true, new: true },
+    );
+
     logger.info(
       `[UserController->update] Successfully saved user ${user._id.toString()}`,
+      {
+        request,
+        user: {
+          id: user._id.toString(),
+        },
+      },
     );
+
     user = await user.defaultPopulate();
     const promises = [];
-    const pendingLogs = [];
     if (request.auth.credentials._id.toString() !== user._id.toString()) {
       // User is being edited by someone else
       // If it's an auth account, surface it
@@ -794,50 +870,75 @@ module.exports = {
         // User is becoming visible. Update lists count.
         const listIds = user.getListIds(true);
         if (listIds.length) {
-          promises.push(List.updateMany({ _id: { $in: listIds } }, {
-            $inc: {
-              countVerified: 1,
-              countUnverified: 1,
-            },
-          }));
-          pendingLogs.push({
-            type: 'info',
-            message: `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
-          });
+          promises.push(
+            List.updateMany({ _id: { $in: listIds } }, {
+              $inc: {
+                countVerified: 1,
+                countUnverified: 1,
+              },
+            }).then(() => {
+              logger.info(
+                `[UserController->update] User ${user._id.toString()} is becoming visible. Updated list counts`,
+                {
+                  request,
+                  user: {
+                    id: user._id.toString(),
+                  },
+                },
+              );
+            }),
+          );
         }
-        promises.push(user.save());
-        pendingLogs.push({
-          type: 'info',
-          message: `[UserController->update] User ${user._id.toString()} saved successfully`,
-        });
+        promises.push(
+          user.save().then(() => {
+            logger.info(
+              `[UserController->update] User ${user._id.toString()} saved successfully`,
+              {
+                request,
+              },
+            );
+          }),
+        );
         if (!user.hidden) {
-          promises.push(EmailService.sendAuthToProfile(user, request.auth.credentials));
-          pendingLogs.push({
-            type: 'info',
-            message: `[UserController->update] Sent auth_to_profile email to user ${user.email}`,
-          });
+          promises.push(
+            EmailService.sendAuthToProfile(user, request.auth.credentials).then(() => {
+              logger.info(
+                `[UserController->update] Sent auth_to_profile email to user ${user.email}`,
+                {
+                  request,
+                },
+              );
+            }),
+          );
         }
       } else if (!user.hidden) {
         const notification = { type: 'admin_edit', user, createdBy: request.auth.credentials };
-        promises.push(NotificationService.send(notification));
-        pendingLogs.push({
-          type: 'info',
-          message: `[UserController->update] Sent admin_edit notification to user ${user.id}`,
-        });
+        promises.push(
+          NotificationService.send(notification).then(() => {
+            logger.info(
+              `[UserController->update] Sent admin_edit notification to user ${user.id}`,
+              {
+                request,
+              },
+            );
+          }),
+        );
       }
     }
 
-    promises.push(GSSSyncService.synchronizeUser(user));
-    pendingLogs.push({
-      type: 'info',
-      message: `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
-    });
-    // promises.push(OutlookService.synchronizeUser(user));
+    promises.push(
+      GSSSyncService.synchronizeUser(user).then(() => {
+        logger.info(
+          `[UserController->update] Synchronized user ${user.id} with google spreadsheet`,
+          {
+            request,
+          },
+        );
+      }),
+    );
 
+    // Execute all operations simultaneously
     await Promise.all(promises);
-    for (let i = 0; i < pendingLogs.length; i += 1) {
-      logger.log(pendingLogs[i]);
-    }
 
     return user;
   },
