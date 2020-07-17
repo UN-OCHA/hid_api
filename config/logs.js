@@ -2,20 +2,21 @@ const _ = require('lodash');
 
 module.exports = {
   hidFormatter(level, msg, logObject) {
+    // Clone the logged object to avoid mutating important objects (e.g. request)
+    // in case the code continues executing after being logged.
     const localLogObject = _.clone(logObject || {});
-    const metadata = {};
 
-    let ip = '';
+    // Define our meta with some defaults.
+    const metadata = {};
+    metadata.level = level;
+
+    // Log IP if we have it.
     if (logObject.request && logObject.request.info && logObject.request.info.remoteAddress) {
-      ip = logObject.request.info.remoteAddress;
+      metadata.ip = localLogObject.request.info.remoteAddress;
     }
     if (logObject.request && logObject.request.headers && logObject.request.headers['x-forwarded-for']) {
-      ip = logObject.request.headers['x-forwarded-for'];
+      metadata.ip = localLogObject.request.headers['x-forwarded-for'];
     }
-
-    // Extend metadata with some defaults.
-    metadata.level = level;
-    metadata.ip = ip;
 
     // Include custom user object from log
     metadata.user = localLogObject.user || {};
@@ -43,11 +44,11 @@ module.exports = {
       }
 
       // Sanitize passwords
-      if (localLogObject.request.payload && localLogObject.request.payload.password) {
-        delete localLogObject.request.payload.password;
+      if (metadata.request.payload && metadata.request.payload.password) {
+        delete metadata.request.payload.password;
       }
-      if (localLogObject.request.payload && localLogObject.request.payload.confirm_password) {
-        delete localLogObject.request.payload.confirm_password;
+      if (metadata.request.payload && metadata.request.payload.confirm_password) {
+        delete metadata.request.payload.confirm_password;
       }
 
       // Sanitize OAuth client secrets
