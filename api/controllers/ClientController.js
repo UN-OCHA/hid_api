@@ -50,6 +50,9 @@ module.exports = {
     if (client) {
       logger.info(
         '[ClientController->create] Created a new client',
+        {
+          request,
+        },
       );
       return client;
     }
@@ -133,6 +136,9 @@ module.exports = {
       if (!result) {
         logger.warn(
           `[ClientController->find] Could not find client with ID ${request.params.id}`,
+          {
+            request,
+          },
         );
         throw Boom.notFound();
       }
@@ -186,10 +192,14 @@ module.exports = {
       request.payload,
       { runValidators: true, new: true },
     );
+
     logger.info(
       `[ClientController->update] Updated client ${request.params.id}`,
-      { request: request.payload },
+      {
+        request,
+      },
     );
+
     return client;
   },
 
@@ -223,7 +233,11 @@ module.exports = {
 
       logger.info(
         `[ClientController->destroy] Removed client ${request.params.id}`,
+        {
+          request,
+        },
       );
+
       return reply.response().code(204);
     }
 
