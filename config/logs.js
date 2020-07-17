@@ -78,6 +78,10 @@ module.exports = {
       // Sanitize credentials, which seems to contain the entire user object
       // from HID, including numerous pieces of sensitive data.
       if (metadata.request.auth && metadata.request.auth.credentials) {
+        // Log whether this user is admin or not.
+        metadata.user.admin = metadata.request.auth.credentials.is_admin;
+
+        // Now delete the credentials object.
         delete metadata.request.auth.credentials;
       }
     }
