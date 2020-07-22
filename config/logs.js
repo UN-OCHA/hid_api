@@ -63,7 +63,7 @@ module.exports = {
       }
 
       // Sanitize OAuth client secrets
-      if (metadata.request.query && typeof metadata.request.query.client_secret !== 'undefined') {
+      if (typeof metadata.request.query.client_secret === 'string') {
         // display first/last three characters but scrub the rest
         const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
         metadata.request.query.client_secret = sanitizedSecret;
@@ -74,7 +74,7 @@ module.exports = {
       // server can generate. That way, we can decode and inspect the payload
       // for debugging purposes, without risking the use of the JWT by devs
       // who have access to ELK.
-      if (metadata.request.headers && metadata.request.headers.authorization) {
+      if (typeof metadata.request.headers.authorization === 'string') {
         let sanitizedJWT = metadata.request.headers.authorization.split('.');
         const buffer = Buffer.from(sanitizedJWT[1], 'base64');
         const asciiJWT = buffer.toString('ascii');
@@ -91,7 +91,7 @@ module.exports = {
 
       // Sanitize JWT blacklist requests. For the same reason as Authentication
       // headers in generic requests.
-      if (metadata.request.payload && typeof metadata.request.payload.token !== 'undefined') {
+      if (typeof metadata.request.payload.token === 'string') {
         let sanitizedJWT = metadata.request.payload.token.split('.');
         sanitizedJWT.pop();
         sanitizedJWT = sanitizedJWT.join('.');
