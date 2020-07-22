@@ -42,7 +42,7 @@ module.exports = {
         '[ClientController->create] Could not create client due to bad request',
         {
           request,
-          stack_trace: err.message,
+          stack_trace: err.message, // err.message contains the most useful error from Mongo
         },
       );
     });
