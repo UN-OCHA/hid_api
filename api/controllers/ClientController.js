@@ -135,7 +135,7 @@ module.exports = {
       const result = await Client.findOne(criteria);
       if (!result) {
         logger.warn(
-          `[ClientController->find] Could not find client with ID ${request.params.id}`,
+          '[ClientController->find] Could not find client',
           {
             request,
           },
@@ -194,7 +194,7 @@ module.exports = {
     );
 
     logger.info(
-      `[ClientController->update] Updated client ${request.params.id}`,
+      '[ClientController->update] Updated client',
       {
         request,
       },
@@ -232,7 +232,7 @@ module.exports = {
       await client.remove();
 
       logger.info(
-        `[ClientController->destroy] Removed client ${request.params.id}`,
+        '[ClientController->destroy] Removed client',
         {
           request,
         },
