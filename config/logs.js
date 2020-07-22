@@ -48,18 +48,20 @@ module.exports = {
         }
       }
 
-      // Sanitize passwords
-      if (metadata.request.payload && metadata.request.payload.password) {
-        delete metadata.request.payload.password;
-      }
-      if (metadata.request.payload && metadata.request.payload.confirm_password) {
-        delete metadata.request.payload.confirm_password;
-      }
-      if (metadata.request.payload && metadata.request.payload.old_password) {
-        delete metadata.request.payload.old_password;
-      }
-      if (metadata.request.payload && metadata.request.payload.new_password) {
-        delete metadata.request.payload.new_password;
+      // Sanitize passwords in request payloads
+      if (metadata.request.payload) {
+        if (metadata.request.payload.password) {
+          delete metadata.request.payload.password;
+        }
+        if (metadata.request.payload.confirm_password) {
+          delete metadata.request.payload.confirm_password;
+        }
+        if (metadata.request.payload.old_password) {
+          delete metadata.request.payload.old_password;
+        }
+        if (metadata.request.payload.new_password) {
+          delete metadata.request.payload.new_password;
+        }
       }
 
       // Sanitize OAuth client secrets
