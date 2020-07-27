@@ -4,7 +4,7 @@ module.exports = {
   hidFormatter(level, msg, logObject) {
     // Clone the logged object to avoid mutating important objects (e.g. request)
     // in case the code continues executing after being logged.
-    const localLogObject = _.clone(logObject || {});
+    const localLogObject = _.cloneDeep(logObject || {});
 
     // Define our meta with some defaults.
     const metadata = {};
