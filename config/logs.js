@@ -9,6 +9,7 @@ module.exports = {
     // Define our meta with some defaults.
     const metadata = {};
     metadata.level = level;
+    metadata['@timestamp'] = new Date().toJSON();
 
     // Log IP if we have it.
     if (logObject.request && logObject.request.info && logObject.request.info.remoteAddress) {
