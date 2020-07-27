@@ -874,7 +874,12 @@ module.exports = {
 
     user = await user.defaultPopulate();
     const promises = [];
-    if (request.auth.credentials._id.toString() !== user._id.toString()) {
+    if (
+      typeof request.auth.credentials !== 'undefined'
+      && typeof request.auth.credentials._id !== 'undefined'
+      && typeof user._id !== 'undefined'
+      && request.auth.credentials._id.toString() !== user._id.toString()
+    ) {
       // User is being edited by someone else
       // If it's an auth account, surface it
       if (user.authOnly) {
