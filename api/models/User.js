@@ -1195,7 +1195,14 @@ UserSchema.methods = {
         }
       } catch (err) {
         // Invalid phone number
-        that.log.error('An invalid phone number was found', { error: err });
+        that.log.error(
+          'An invalid phone number was found',
+          {
+            error: err.message,
+            error_object: err,
+            stack_trace: err.stack,
+          },
+        );
       }
     });
     return found;

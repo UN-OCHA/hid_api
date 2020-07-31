@@ -88,7 +88,11 @@ async function writeUser(gsssync, authClient, user, index) {
   } catch (err) {
     logger.error(
       `[GSSSyncService->writeUser] Error writing user to spreadsheet ${gsssync.spreadsheet}`,
-      { error: err },
+      {
+        error: err.message,
+        err_object: err,
+        stack_trace: err.stack,
+      },
     );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
@@ -172,7 +176,12 @@ async function addUser(agsssync, user) {
   } catch (err) {
     logger.error(
       `[GSSSyncService->writeUser] Error adding user to spreadsheet ${gsssync.spreadsheet}`,
-      { error: err },
+      {
+        fail: true,
+        error: err.message,
+        err_object: err,
+        stack_trace: err.stack,
+      },
     );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
@@ -237,7 +246,11 @@ async function deleteUser(agsssync, hid) {
   } catch (err) {
     logger.error(
       `[GSSSyncService->deleteUser] Error removing user from spreadsheet ${gsssync.spreadsheet}`,
-      { error: err },
+      {
+        error: err.message,
+        err_object: err,
+        stack_trace: err.stack,
+      },
     );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization
@@ -277,13 +290,27 @@ async function updateUser(agsssync, user) {
     } else {
       logger.warn(
         `[GSSSyncService->updateUser] Could not find user ${user._id} in spreadsheet ${gsssync.spreadsheet}`,
+        {
+          fail: true,
+          user: {
+            id: user._id,
+          },
+        },
       );
       throw new Error(`Could not find user ${user._id.toString()} for spreadsheet ${gsssync.spreadsheet}`);
     }
   } catch (err) {
     logger.error(
       `[GSSSyncService->updateUser] Error updating user in spreadsheet ${gsssync.spreadsheet}`,
-      { error: err },
+      {
+        fail: true,
+        error: err.message,
+        err_object: err,
+        stack_trace: err.stack,
+        user: {
+          id: user._id,
+        },
+      },
     );
     if (err.code === 404 || err.code === 403) {
       // Spreadsheet has been deleted, remove the synchronization

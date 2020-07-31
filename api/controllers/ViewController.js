@@ -142,7 +142,17 @@ module.exports = {
         logger.warn(`Redirecting to ${request.query.redirect} is not allowed`, { security: true, fail: true, request });
         return reply.redirect('/');
       } catch (err) {
-        logger.error('Error logging user out', { request, error: err });
+        logger.error(
+          'Error logging user out',
+          {
+            request,
+            security: true,
+            fail: true,
+            error: err.message,
+            err_object: err,
+            stack_trace: err.stack,
+          },
+        );
         return reply.redirect('/');
       }
     } else {
