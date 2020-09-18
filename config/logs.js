@@ -67,8 +67,8 @@ module.exports = {
 
       // Sanitize OAuth client secrets
       if (typeof metadata.request.query.client_secret === 'string') {
-        // display first/last three characters but scrub the rest
-        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 3)}...${metadata.request.query.client_secret.slice(-3)}`;
+        // display first/last five characters but scrub the rest
+        const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 5)}...${metadata.request.query.client_secret.slice(-5)}`;
         metadata.request.query.client_secret = sanitizedSecret;
       }
 
