@@ -72,12 +72,26 @@ module.exports = {
         metadata.request.query.client_secret = sanitizedSecret;
       }
 
+      // Sanitize OAuth client secrets found in Headers
+      //
+      // This will display "Basic 00000...00000" in ELK.
+      if (
+        typeof metadata.request.headers.authorization === 'string'
+        && metadata.request.headers.authorization.indexOf('Basic') !== -1
+      ) {
+        const sanitizedSecret = `${metadata.request.headers.authorization.slice(0, 11)}...${metadata.request.headers.authorization.slice(-5)}`;
+        metadata.request.headers.authorization = sanitizedSecret;
+      }
+
       // Sanitize JWTs, which can allow anyone to masquerade as this user.
       // We do this by removing the signature at the end, which only our
       // server can generate. That way, we can decode and inspect the payload
       // for debugging purposes, without risking the use of the JWT by devs
       // who have access to ELK.
-      if (typeof metadata.request.headers.authorization === 'string') {
+      if (
+        typeof metadata.request.headers.authorization === 'string'
+        && metadata.request.headers.authorization.indexOf('Bearer') !== -1
+      ) {
         let sanitizedJWT = metadata.request.headers.authorization.split('.');
         const buffer = Buffer.from(sanitizedJWT[1], 'base64');
         const asciiJWT = buffer.toString('ascii');
