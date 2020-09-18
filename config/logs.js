@@ -66,6 +66,8 @@ module.exports = {
       }
 
       // Sanitize OAuth client secrets
+      //
+      // This will display "00000...00000" in ELK.
       if (typeof metadata.request.query.client_secret === 'string') {
         // display first/last five characters but scrub the rest
         const sanitizedSecret = `${metadata.request.query.client_secret.slice(0, 5)}...${metadata.request.query.client_secret.slice(-5)}`;
@@ -95,6 +97,9 @@ module.exports = {
         let sanitizedJWT = metadata.request.headers.authorization.split('.');
         const buffer = Buffer.from(sanitizedJWT[1], 'base64');
         const asciiJWT = buffer.toString('ascii');
+
+        // Now pop the signature off to neuter the usefulness of the logged JWT
+        // and prevent ELK from storing actionable credentials.
         sanitizedJWT.pop();
         sanitizedJWT = sanitizedJWT.join('.');
         metadata.request.headers.authorization = sanitizedJWT;
