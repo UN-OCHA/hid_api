@@ -70,23 +70,26 @@ module.exports = {
    * summary: Returns all the clients the user has access to.
    * parameters:
    *   - name: sort
+   *     in: query
+   *     required: false
+   *     schema:
+   *       type: string
+   *       default: name
    *     description: Sort by this attribute.
-   *     in: query
-   *     type: string
-   *     required: false
-   *     default: name
    *   - name: offset
+   *     in: query
+   *     required: false
+   *     schema:
+   *       type: integer
+   *       default: 0
    *     description: Offset list by this many clients.
-   *     in: query
-   *     type: integer
-   *     required: false
-   *     default: 0
    *   - name: limit
-   *     description: Limit list to this many clients.
    *     in: query
-   *     type: integer
    *     required: false
-   *     default: 100
+   *     schema:
+   *       type: integer
+   *       default: 100
+   *     description: Limit list to this many clients.
    * responses:
    *   '200':
    *     description: Array of client objects.
@@ -111,10 +114,9 @@ module.exports = {
    * summary: Returns one client with the specified ID.
    * parameters:
    *   - name: id
-   *     description: A 24-character alphanumeric Client ID
    *     in: path
    *     required: true
-   *     default: ''
+   *     description: A 24-character alphanumeric Client ID
    * responses:
    *   '200':
    *     description: The client object.
@@ -217,10 +219,9 @@ module.exports = {
    * summary: Update client with the specified ID.
    * parameters:
    *   - name: id
-   *     description: A 24-character alphanumeric Client ID
    *     in: path
    *     required: true
-   *     default: ''
+   *     description: A 24-character alphanumeric Client ID
    * requestBody:
    *   description: Client object
    *   required: true
@@ -292,10 +293,9 @@ module.exports = {
    * summary: Deletes the client with the specified ID.
    * parameters:
    *   - name: id
-   *     description: A 24-character alphanumeric Client ID
    *     in: path
    *     required: true
-   *     default: ''
+   *     description: A 24-character alphanumeric Client ID
    * responses:
    *   '204':
    *     description: Client successfully deleted.

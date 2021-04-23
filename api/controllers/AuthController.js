@@ -178,9 +178,10 @@ module.exports = {
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
-   *     description: The TOTP token. Required if the user has 2FA enabled.
    *     required: false
-   *     type: string
+   *     schema:
+   *       type: string
+   *     description: The TOTP token. Required if the user has 2FA enabled.
    * requestBody:
    *   description: 'User email and password'
    *   required: true

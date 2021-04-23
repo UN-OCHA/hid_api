@@ -147,9 +147,10 @@ module.exports = {
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
-   *     description: The TOTP token. Required.
    *     required: true
-   *     type: string
+   *     schema:
+   *       type: string
+   *     description: The TOTP token. Required.
    * requestBody:
    *   description: >-
    *     Must be an object specifying: `{"method": "app"}`
@@ -240,9 +241,10 @@ module.exports = {
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
-   *     description: The TOTP token. Required.
    *     required: true
-   *     type: string
+   *     schema:
+   *       type: string
+   *     description: The TOTP token. Required.
    * responses:
    *   '204':
    *     description: TOTP token is valid.
@@ -263,9 +265,10 @@ module.exports = {
    * parameters:
    *   - name: X-HID-TOTP
    *     in: header
-   *     description: The TOTP token. Required.
    *     required: true
-   *     type: string
+   *     schema:
+   *       type: string
+   *     description: The TOTP token. Required.
    * responses:
    *   '200':
    *     description: The updated user object
