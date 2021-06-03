@@ -10,8 +10,8 @@ module.exports = {
 
   // Generates a token from supplied payload
   issue(payload) {
-    const cert = fs.readFileSync('keys/hid.rsa');
-    const options = { algorithm: 'RS256', header: { kid: 'hid-dev' } };
+    const cert = fs.readFileSync('keys/sign.rsa');
+    const options = { algorithm: 'RS256', header: { kid: `hid-v3-${process.env.NODE_ENV}` } };
     return jwt.sign(
       payload,
       cert,
@@ -21,13 +21,49 @@ module.exports = {
 
   // Verifies token on a request
   verify(token) {
-    const cert = fs.readFileSync('keys/hid.rsa.pub');
-    return jwt.verify(token, cert);
+    let success = false;
+
+    try {
+      const cert = fs.readFileSync('keys/sign.rsa.pub');
+      success = jwt.verify(token, cert);
+
+      // If we loaded the key but sig was not verified, throw an error.
+      if (!success) {
+        throw new Error({});
+      }
+    } catch (err) {
+      // During v3 transition period, we try again with the old key if our new
+      // key is either missing.
+      //
+      // @see https://humanitarian.atlassian.net/browse/HID-2027
+      const legacy = fs.readFileSync('keys/hid.rsa.pub');
+      success = jwt.verify(token, legacy);
+    }
+
+    return success;
   },
 
   public2jwk() {
-    const cert = fs.readFileSync('keys/hid.rsa.pub');
-    return rsa2jwk(cert, { use: 'sig', kid: 'hid-dev' }, 'public');
+    let success = false;
+
+    try {
+      const cert = fs.readFileSync('keys/sign.rsa.pub');
+      success = rsa2jwk(cert, { use: 'sig', kid: 'hid-v3' }, 'public');
+
+      // If we loaded the key but sig was not verified, throw an error.
+      if (!success) {
+        throw new Error({});
+      }
+    } catch (err) {
+      // During v3 transition period, we try again with the old key if our new key
+      // cannot verify the JWT.
+      //
+      // @see https://humanitarian.atlassian.net/browse/HID-2027
+      const legacy = fs.readFileSync('keys/hid.rsa.pub');
+      success = rsa2jwk(legacy, { use: 'sig', kid: 'hid-v3' }, 'public');
+    }
+
+    return success;
   },
 
   generateIdToken(client, user, scope, nonce) {
